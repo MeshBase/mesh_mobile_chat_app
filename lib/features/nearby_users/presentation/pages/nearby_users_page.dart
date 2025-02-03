@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mesh_mobile/common/widgets/list_item.dart';
+import 'package:mesh_mobile/route_names.dart';
 
 class NearbyUsersPage extends StatelessWidget {
   const NearbyUsersPage({super.key});
@@ -52,6 +54,9 @@ class NearbyUsersPage extends StatelessWidget {
                   isOnline: user['isOnline']!,
                   initial: user['initial']!,
                   notificationCount: user['notificationCount'],
+                  onPressed: () {
+                    context.push(Routes.chat);
+                  },
                 );
               },
             ),

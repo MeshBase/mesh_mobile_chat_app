@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mesh_mobile/common/widgets/search_bar.dart';
 import 'package:mesh_mobile/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:mesh_mobile/features/nearby_users/presentation/pages/nearby_users_page.dart';
 import 'package:mesh_mobile/features/search/presentation/pages/search_users_page.dart';
+import 'package:mesh_mobile/route_names.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -21,34 +23,34 @@ class _HomeState extends State<Home> {
     SearchUsersPage(),
   ];
 
-  final List<PreferredSizeWidget> _homePageAppBars = [
-    AppBar(title: const SearchBarWidget()),
-    AppBar(
-      title: const Text("Chats"),
-      actions: [
-        // search and settings
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {
-            print("Search button clicked");
-          },
-        ),
-
-        IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            print("Settings button clicked");
-          },
-        ),
-      ],
-    ),
-    AppBar(title: const SearchBarWidget()),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _homePageAppBars[_selectedTabIndex],
+      appBar: <PreferredSizeWidget>[
+        AppBar(title: const SearchBarWidget()),
+        AppBar(
+          title: const Text("Chats"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                setState(() {
+                  _selectedTabIndex = 2;
+                });
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                context.push(Routes.settings);
+              },
+            ),
+          ],
+        ),
+        AppBar(
+          title: const SearchBarWidget(),
+        ),
+      ][_selectedTabIndex],
       body: _homePages[_selectedTabIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedTabIndex,
@@ -68,7 +70,6 @@ class _HomeState extends State<Home> {
         ],
         selectedItemColor: Colors.blue.shade900,
         onTap: (int index) {
-          print("Bottom Nav index $index selected");
           setState(() {
             _selectedTabIndex = index;
           });

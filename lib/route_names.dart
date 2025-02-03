@@ -6,4 +6,5 @@ class Routes {
   static const search = '/search';
   static const chatList = '/chat_list';
   static const chat = '/chat';
+  static const settings = "/settings";
 }

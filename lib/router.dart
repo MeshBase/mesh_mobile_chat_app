@@ -4,6 +4,7 @@ import 'package:mesh_mobile/features/chat/presentation/pages/chat_list_page.dart
 import 'package:mesh_mobile/features/nearby_users/presentation/pages/nearby_users_page.dart';
 import 'package:mesh_mobile/features/register/presentation/pages/register_page.dart';
 import 'package:mesh_mobile/features/search/presentation/pages/search_users_page.dart';
+import 'package:mesh_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:mesh_mobile/home/presentation/pages/home_page.dart';
 import 'package:mesh_mobile/route_names.dart';
 
@@ -51,5 +52,11 @@ final GoRouter router = GoRouter(
         return ChatDetailPage();
       },
     ),
+    GoRoute(
+      path: Routes.settings,
+      builder: (context, state) {
+        return const SettingsPage();
+      },
+    )
   ],
 );
