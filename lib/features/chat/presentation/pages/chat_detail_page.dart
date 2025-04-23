@@ -1,37 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mesh_mobile/features/chat/domain/chat_detail_model.dart';
+import 'package:mesh_mobile/features/chat/presentation/bloc/chat_detail_bloc.dart';
 import 'package:mesh_mobile/features/chat/presentation/widgets/chat_bubble.dart';
 import 'package:go_router/go_router.dart';
 
-class ChatDetailPage extends StatefulWidget {
+class ChatDetailPage extends StatelessWidget {
   ChatDetailPage({super.key});
 
-  @override
-  State<ChatDetailPage> createState() => _ChatDetailPageState();
-}
-
-class _ChatDetailPageState extends State<ChatDetailPage> {
-  final List<Map<String, dynamic>> chatText = [
-    {
-      "textTime": DateTime.now(),
-      "bubbleContent": "Hello",
-      "isSender": false,
-    },
-    {
-      "textTime": DateTime.now(),
-      "bubbleContent": "Hi",
-      "isSender": true,
-    },
-    {
-      "textTime": DateTime.now(),
-      "bubbleContent": "How are you?",
-      "isSender": false,
-    },
-    {
-      "textTime": DateTime.now(),
-      "bubbleContent": "I'm doing good, how are you?",
-      "isSender": true,
-    }
-  ];
   final TextEditingController _messageController = TextEditingController();
 
   @override
@@ -43,17 +19,46 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             // Top section of chat detail page
             _buildTopSection(context),
 
-            // Body Section
             Expanded(
-              child: ListView.builder(
-                itemCount: chatText.length,
-                itemBuilder: (context, index) {
-                  final chatBubble = chatText[index];
-                  return ChatBubble(
-                    textTime: chatBubble["textTime"],
-                    bubbleContent: chatBubble["bubbleContent"],
-                    isSender: chatBubble["isSender"],
-                  );
+              child: Builder(
+                builder: (context) {
+                  final bloc = context.watch<ChatDetailBloc>();
+                  final state = bloc.state;
+
+                  switch (state) {
+                    case ChatDetailInitial():
+                      bloc.add(GiveMeData());
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+
+                    case ChatDetailLoading():
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    case ChatDetailLoaded():
+                      return ListView.builder(
+                        itemCount: state.chats.length,
+                        itemBuilder: (context, index) {
+                          final chatBubble = state.chats[index];
+                          return ChatBubble(
+                            onTap: () => bloc.add(const RecieveChat(
+                              chatContent: ChatDetailModel(
+                                isSender: false,
+                                content: 'Evolution',
+                              ),
+                            )),
+                            textTime: DateTime.now(),
+                            bubbleContent: chatBubble.content,
+                            isSender: chatBubble.isSender,
+                          );
+                        },
+                      );
+                    default:
+                      return Center(
+                        child: Text('Unimplemented state $state'),
+                      );
+                  }
                 },
               ),
             ),
@@ -81,13 +86,21 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 15,
                     ),
                     Padding(
-                      padding: EdgeInsets.only(right: 15),
+                      padding: const EdgeInsets.only(right: 15),
                       child: InkWell(
-                        onTap: () {},
+                        onTap: () {
+                          final message = _messageController.text.trim();
+                          if (message.isNotEmpty) {
+                            context.read<ChatDetailBloc>().add(SendChat(
+                                chatContent: ChatDetailModel(
+                                    content: message, isSender: true)));
+                          }
+                          _messageController.clear();
+                        },
                         child: Container(
                           width: 47,
                           height: 47,

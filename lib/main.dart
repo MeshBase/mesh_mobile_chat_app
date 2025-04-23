@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mesh_mobile/features/chat/presentation/bloc/chat_detail_bloc.dart';
 import 'package:mesh_mobile/router.dart';
 
 void main() {
@@ -10,7 +12,6 @@ void main() {
 class MeshApp extends StatelessWidget {
   const MeshApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
@@ -23,7 +24,9 @@ class MeshApp extends StatelessWidget {
       ),
       routerConfig: router,
       builder: (context, widget) {
-        return widget!;
+        return MultiBlocProvider(providers: [
+          BlocProvider<ChatDetailBloc>(create: (context) => ChatDetailBloc())
+        ], child: widget!);
       },
     );
   }
