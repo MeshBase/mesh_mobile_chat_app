@@ -6,56 +6,62 @@ class ChatBubble extends StatelessWidget {
     required this.textTime,
     required this.bubbleContent,
     required this.isSender,
+    required this.onTap, //ONLY for simulating recieving data. WILL BE DELETED LATER
   });
 
   final DateTime textTime;
   final String bubbleContent;
   final bool isSender;
+  final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      child: Row(
-        mainAxisAlignment:
-            isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align time text right
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isSender ? Colors.grey.shade800 : Colors.grey.shade200,
-                    borderRadius: isSender
-                        ? const BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                            bottomLeft: Radius.circular(10),
-                          )
-                        : const BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                            bottomRight: Radius.circular(10),
-                          ),
-                  ),
-                  child: Text(
-                    bubbleContent,
-                    style: TextStyle(
-                      color: isSender ? Colors.white : Colors.black,
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+        child: Row(
+          mainAxisAlignment:
+              isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align time text right
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSender
+                          ? Colors.grey.shade800
+                          : Colors.grey.shade200,
+                      borderRadius: isSender
+                          ? const BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
+                              bottomLeft: Radius.circular(10),
+                            )
+                          : const BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
+                              bottomRight: Radius.circular(10),
+                            ),
+                    ),
+                    child: Text(
+                      bubbleContent,
+                      style: TextStyle(
+                        color: isSender ? Colors.white : Colors.black,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
