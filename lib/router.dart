@@ -13,7 +13,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.init,
       builder: (context, state) {
-        return const RegisterPage();
+        return RegisterPage();
       },
     ),
     GoRoute(
@@ -25,7 +25,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.register,
       builder: (context, state) {
-        return const RegisterPage();
+        return RegisterPage();
       },
     ),
     GoRoute(

@@ -7,5 +7,5 @@ class RegisterModel extends Equatable {
   const RegisterModel({required this.name, required this.userName});
 
   @override
-  List<Object?> get props => [name, userName];
+  List<Object> get props => [name, userName];
 }
