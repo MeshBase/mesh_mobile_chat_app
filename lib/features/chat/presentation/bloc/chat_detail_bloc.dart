@@ -18,6 +18,7 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     emit(ChatDetailLoading());
     await DatabaseHelper.db;
     final messageData = await DatabaseHelper.getMessagesByChatId(event.chatId);
+
     List<ChatDetailModel> dummyData = [
       const ChatDetailModel(content: "Hello", isSender: false),
       const ChatDetailModel(content: "Hi", isSender: true),

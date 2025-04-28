@@ -60,7 +60,10 @@ class NearbyUsersPage extends StatelessWidget {
                   notificationCount: user['notificationCount'],
                   onPressed: () {
                     final data = UserInfoModel(
-                        chatId: user['chatId'], name: user['name']);
+                      chatId: user['chatId'],
+                      name: user['name'],
+                      userId: user['userId'],
+                    );
                     context.push(Routes.chat, extra: data);
                   },
                 );

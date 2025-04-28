@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,8 +40,29 @@ class DatabaseHelper {
             timestamp TEXT
           )
         ''');
+
+        await seedDummyUsers(db);
       },
     );
+  }
+
+  static Future<void> seedDummyUsers(Database db) async {
+    // Insert dummy users for testing purposes. WILL BE REPLACED WITH ACTUAL DATA LATER
+    final dummyUsers = [
+      {'name': 'Alice', 'username': 'alice123'},
+      {'name': 'Bob', 'username': 'bob456'},
+      {'name': 'Charlie', 'username': 'charlie789'},
+    ];
+
+    for (var user in dummyUsers) {
+      await db.insert('users', {
+        'id': _uuid.v4(),
+        'name': user['name']!,
+        'username': user['username']!,
+      });
+    }
+
+    debugPrint("[X]Dummy users successfully seeded");
   }
 
   // ─────────────── USERS ───────────────

@@ -9,8 +9,10 @@ import 'package:mesh_mobile/features/search/presentation/pages/search_users_page
 import 'package:mesh_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:mesh_mobile/home/presentation/pages/home_page.dart';
 import 'package:mesh_mobile/route_names.dart';
+import 'package:mesh_mobile/route_observer.dart';
 
 final GoRouter router = GoRouter(
+  observers: [routeObserver],
   routes: [
     GoRoute(
       path: Routes.init,
