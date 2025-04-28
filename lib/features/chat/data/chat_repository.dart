@@ -32,7 +32,9 @@ class ChatRepository {
                 LIMIT 1
             ) AS lastMessageTime
         FROM users u
-        ORDER BY lastMessageTime DESC NULLS LAST
+        ORDER BY 
+            CASE WHEN lastMessageTime IS NULL THEN 1 ELSE 0 END,
+            lastMessageTime DESC; 
     ''');
 
     return result
