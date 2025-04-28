@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mesh_mobile/features/chat/domain/user_info_model.dart';
 import 'package:mesh_mobile/features/chat/presentation/pages/chat_detail_page.dart';
 import 'package:mesh_mobile/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:mesh_mobile/features/nearby_users/presentation/pages/nearby_users_page.dart';
@@ -49,7 +51,16 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.chat,
       builder: (context, state) {
-        return ChatDetailPage();
+        final extra = state.extra;
+        if (extra != null) {
+          return ChatDetailPage(
+            userInfoModel: extra as UserInfoModel,
+          );
+        }
+
+        return const Scaffold(
+          body: Center(child: Text('Invalid user data')),
+        );
       },
     ),
     GoRoute(

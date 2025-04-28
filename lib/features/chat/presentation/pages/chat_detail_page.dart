@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mesh_mobile/features/chat/domain/chat_detail_model.dart';
+import 'package:mesh_mobile/features/chat/domain/user_info_model.dart';
 import 'package:mesh_mobile/features/chat/presentation/bloc/chat_detail_bloc.dart';
 import 'package:mesh_mobile/features/chat/presentation/widgets/chat_bubble.dart';
 import 'package:go_router/go_router.dart';
 
-class ChatDetailPage extends StatelessWidget {
-  ChatDetailPage({super.key});
+class ChatDetailPage extends StatefulWidget {
+  final UserInfoModel userInfoModel;
+  const ChatDetailPage({super.key, required this.userInfoModel});
 
+  @override
+  State<ChatDetailPage> createState() => _ChatDetailPageState();
+}
+
+class _ChatDetailPageState extends State<ChatDetailPage> {
   final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    context
+        .read<ChatDetailBloc>()
+        .add(GiveMeData(chatId: widget.userInfoModel.chatId));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,48 +32,45 @@ class ChatDetailPage extends StatelessWidget {
         child: Column(
           children: [
             // Top section of chat detail page
-            _buildTopSection(context),
+            _buildTopSection(context, name: widget.userInfoModel.name),
 
             Expanded(
-              child: Builder(
-                builder: (context) {
-                  final bloc = context.watch<ChatDetailBloc>();
-                  final state = bloc.state;
+              child: BlocBuilder<ChatDetailBloc, ChatDetailState>(
+                builder: (context, state) {
+                  final bloc = context.read<ChatDetailBloc>();
 
-                  switch (state) {
-                    case ChatDetailInitial():
-                      bloc.add(GiveMeData());
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-
-                    case ChatDetailLoading():
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    case ChatDetailLoaded():
-                      return ListView.builder(
-                        itemCount: state.chats.length,
-                        itemBuilder: (context, index) {
-                          final chatBubble = state.chats[index];
-                          return ChatBubble(
-                            onTap: () => bloc.add(const RecieveChat(
-                              chatContent: ChatDetailModel(
-                                isSender: false,
-                                content: 'Evolution',
-                              ),
-                            )),
-                            textTime: DateTime.now(),
-                            bubbleContent: chatBubble.content,
-                            isSender: chatBubble.isSender,
-                          );
-                        },
-                      );
-                    default:
-                      return Center(
-                        child: Text('Unimplemented state $state'),
-                      );
+                  if (state is ChatDetailInitial) {
+                    bloc.add(GiveMeData(chatId: widget.userInfoModel.chatId));
+                    return const Center(child: CircularProgressIndicator());
                   }
+
+                  if (state is ChatDetailLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is ChatDetailLoaded) {
+                    return ListView.builder(
+                      itemCount: state.chats.length,
+                      itemBuilder: (context, index) {
+                        final chatBubble = state.chats[index];
+                        return ChatBubble(
+                          onTap: () => bloc.add(const RecieveChat(
+                            chatContent: ChatDetailModel(
+                              isSender: false,
+                              content: 'Evolution',
+                            ),
+                          )),
+                          textTime: DateTime.now(),
+                          bubbleContent: chatBubble.content,
+                          isSender: chatBubble.isSender,
+                        );
+                      },
+                    );
+                  }
+
+                  return Center(
+                    child: Text('Unimplemented state: $state'),
+                  );
                 },
               ),
             ),
@@ -126,7 +138,7 @@ class ChatDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTopSection(context) {
+  Widget _buildTopSection(context, {required String name}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: const BoxDecoration(
@@ -159,10 +171,10 @@ class ChatDetailPage extends StatelessWidget {
                   color: Colors.grey.shade800,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    "A",
-                    style: TextStyle(
+                    name[0],
+                    style: const TextStyle(
                       fontWeight: FontWeight.w200,
                       color: Colors.white,
                       fontSize: 20,
@@ -189,10 +201,10 @@ class ChatDetailPage extends StatelessWidget {
           const SizedBox(width: 10),
 
           // user name
-          const Expanded(
+          Expanded(
             child: Text(
-              "Abe Kebe",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
 
