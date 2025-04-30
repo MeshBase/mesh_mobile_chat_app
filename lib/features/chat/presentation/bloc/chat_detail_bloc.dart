@@ -9,12 +9,12 @@ part 'chat_detail_state.dart';
 
 class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
   ChatDetailBloc() : super(ChatDetailInitial()) {
-    on<GiveMeData>(_fetchDataFromDb);
+    on<GetChatDetail>(_fetchDataFromDb);
     on<SendChat>(_sendData);
     on<RecieveChat>(_recieveData);
   }
 
-  FutureOr<void> _fetchDataFromDb(GiveMeData event, emit) async {
+  FutureOr<void> _fetchDataFromDb(GetChatDetail event, emit) async {
     emit(ChatDetailLoading());
     await DatabaseHelper.db;
     final messageData = await DatabaseHelper.getMessagesByChatId(event.chatId);

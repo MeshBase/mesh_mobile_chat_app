@@ -22,7 +22,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     super.initState();
     context
         .read<ChatDetailBloc>()
-        .add(GiveMeData(chatId: widget.userInfoModel.chatId));
+        .add(GetChatDetail(chatId: widget.userInfoModel.chatId));
   }
 
   @override
@@ -40,7 +40,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   final bloc = context.read<ChatDetailBloc>();
 
                   if (state is ChatDetailInitial) {
-                    bloc.add(GiveMeData(chatId: widget.userInfoModel.chatId));
+                    bloc.add(GetChatDetail(chatId: widget.userInfoModel.chatId));
                     return const Center(child: CircularProgressIndicator());
                   }
 
