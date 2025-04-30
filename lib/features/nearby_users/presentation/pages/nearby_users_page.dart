@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mesh_mobile/common/widgets/list_item.dart';
+import 'package:mesh_mobile/features/chat/domain/user_info_model.dart';
 import 'package:mesh_mobile/route_names.dart';
 
 class NearbyUsersPage extends StatelessWidget {
@@ -15,6 +16,7 @@ class NearbyUsersPage extends StatelessWidget {
         "isOnline": true,
         "initial": "A",
         "notificationCount": null,
+        "chatId": 'c2029bb3-00d0-470a-a6e1-e7f834a55eca'
       },
       {
         "name": "Meron Kebede",
@@ -22,6 +24,7 @@ class NearbyUsersPage extends StatelessWidget {
         "isOnline": true,
         "initial": "M",
         "notificationCount": 1,
+        "chatId": 'f69cbaa4-c358-4063-b6d4-a5bf84bcc86c'
       },
       {
         "name": "Asmamaw Demeke",
@@ -29,6 +32,7 @@ class NearbyUsersPage extends StatelessWidget {
         "isOnline": true,
         "initial": "A",
         "notificationCount": null,
+        "chatId": '13207541-8916-4b0c-84cf-cbb3dad351e0'
       },
       {
         "name": "Bethel Shemsu",
@@ -36,9 +40,9 @@ class NearbyUsersPage extends StatelessWidget {
         "isOnline": true,
         "initial": "B",
         "notificationCount": null,
+        "chatId": '71a826df-1a1c-4a3c-bae4-c8feb075471a'
       },
     ];
-
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
       child: Column(
@@ -55,7 +59,12 @@ class NearbyUsersPage extends StatelessWidget {
                   initial: user['initial']!,
                   notificationCount: user['notificationCount'],
                   onPressed: () {
-                    context.push(Routes.chat);
+                    final data = UserInfoModel(
+                      chatId: user['chatId'],
+                      name: user['name'],
+                      userId: user['userId'],
+                    );
+                    context.push(Routes.chat, extra: data);
                   },
                 );
               },

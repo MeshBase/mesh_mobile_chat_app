@@ -7,7 +7,14 @@ sealed class ChatDetailEvent extends Equatable {
   List<Object> get props => [];
 }
 
-final class GiveMeData extends ChatDetailEvent {}
+final class GetChatDetail extends ChatDetailEvent {
+  final String chatId;
+
+  const GetChatDetail({required this.chatId});
+
+  @override
+  List<Object> get props => [chatId];
+}
 
 final class SendChat extends ChatDetailEvent {
   final ChatDetailModel chatContent;

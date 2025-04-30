@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mesh_mobile/features/chat/data/chat_repository.dart';
 import 'package:mesh_mobile/features/chat/presentation/bloc/chat_detail_bloc.dart';
+import 'package:mesh_mobile/features/chat/presentation/bloc/chat_list_bloc.dart';
 import 'package:mesh_mobile/features/register/presentation/bloc/register_bloc.dart';
 import 'package:mesh_mobile/router.dart';
 
@@ -27,6 +29,9 @@ class MeshApp extends StatelessWidget {
       builder: (context, widget) {
         return MultiBlocProvider(providers: [
           BlocProvider<ChatDetailBloc>(create: (context) => ChatDetailBloc()),
+          BlocProvider<ChatListBloc>(
+              create: (context) =>
+                  ChatListBloc(chatRepository: ChatRepository())),
           BlocProvider<RegisterBloc>(create: (context) => RegisterBloc())
         ], child: widget!);
       },
