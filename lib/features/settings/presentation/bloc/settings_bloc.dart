@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,7 +11,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc() : super(SettingsInitial()) {
     on<GetSettings>(_getSettings);
     on<ChangeName>(_changeName);
-    on<SubmitUpdatedSettings>(_submitRegistration);
+    on<SubmitUpdatedSettings>(_saveSettings);
   }
 
   _splitUserName(String userName) {
@@ -73,19 +72,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     return '@${name.trim().split(' ').where((char) => char.isNotEmpty).join('_').toLowerCase()}';
   }
 
-  String generateRandomString({int length = 12}) {
-    final random = Random();
-
-    const lowercaseLetters = 'abcdefghijklmnopqrstuvwxyz';
-    final chars = List.generate(
-        length,
-        (index) => lowercaseLetters
-            .codeUnitAt(random.nextInt(lowercaseLetters.length)));
-
-    return String.fromCharCodes(chars);
-  }
-
-  FutureOr<void> _submitRegistration(SubmitUpdatedSettings event, emit) async {
+  FutureOr<void> _saveSettings(SubmitUpdatedSettings event, emit) async {
     if (state is SettingsFormState) {
       final formState = state as SettingsFormState;
 
