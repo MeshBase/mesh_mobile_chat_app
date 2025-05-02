@@ -4,6 +4,7 @@ import 'package:mesh_mobile/features/chat/data/chat_repository.dart';
 import 'package:mesh_mobile/features/chat/presentation/bloc/chat_detail_bloc.dart';
 import 'package:mesh_mobile/features/chat/presentation/bloc/chat_list_bloc.dart';
 import 'package:mesh_mobile/features/register/presentation/bloc/register_bloc.dart';
+import 'package:mesh_mobile/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:mesh_mobile/router.dart';
 
 void main() {
@@ -32,7 +33,8 @@ class MeshApp extends StatelessWidget {
           BlocProvider<ChatListBloc>(
               create: (context) =>
                   ChatListBloc(chatRepository: ChatRepository())),
-          BlocProvider<RegisterBloc>(create: (context) => RegisterBloc())
+          BlocProvider<RegisterBloc>(create: (context) => RegisterBloc()),
+          BlocProvider<SettingsBloc>(create: (context) => SettingsBloc())
         ], child: widget!);
       },
     );
