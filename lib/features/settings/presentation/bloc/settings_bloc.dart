@@ -32,7 +32,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
       final (userNameBase, userNameAppended) = _splitUserName(user.userName);
 
-      emit(SettingsFormState(
+      emit(SettingsLoadedState(
         pending: false,
         saved: false,
         error: '',
@@ -41,7 +41,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         userNameAppended: userNameAppended,
       ));
     } catch (e) {
-      emit(SettingsFormState(
+      emit(SettingsLoadedState(
         pending: false,
         saved: false,
         error: 'Something went wrong - ${e.toString()}',
@@ -53,10 +53,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }
 
   _changeName(ChangeName event, emit) {
-    if (state is SettingsFormState) {
-      final formState = state as SettingsFormState;
+    if (state is SettingsLoadedState) {
+      final formState = state as SettingsLoadedState;
       emit(
-        SettingsFormState(
+        SettingsLoadedState(
           error: '',
           pending: false,
           saved: false,
@@ -73,8 +73,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }
 
   FutureOr<void> _saveSettings(SubmitUpdatedSettings event, emit) async {
-    if (state is SettingsFormState) {
-      final formState = state as SettingsFormState;
+    if (state is SettingsLoadedState) {
+      final formState = state as SettingsLoadedState;
 
       try {
         await DatabaseHelper.upsertRegisteredUser(
@@ -85,7 +85,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         if (user == null) {
           throw Exception('User not found after updating');
         }
-        emit(SettingsFormState(
+        emit(SettingsLoadedState(
           name: user.name,
           userNameBase: formState.userNameBase,
           userNameAppended: formState.userNameAppended,

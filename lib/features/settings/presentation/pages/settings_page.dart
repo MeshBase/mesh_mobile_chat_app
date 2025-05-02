@@ -28,7 +28,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return BlocListener(
         bloc: context.read<SettingsBloc>(),
         listener: (context, state) {
-          if (state is SettingsFormState && state.saved) {
+          if (state is SettingsLoadedState && state.saved) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text("Settings saved!"),
@@ -36,7 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             );
             context.go(Routes.home);
-          } else if (state is SettingsFormState && state.error.isNotEmpty) {
+          } else if (state is SettingsLoadedState && state.error.isNotEmpty) {
             final colorScheme = Theme.of(context).colorScheme;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -47,7 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             );
           }
-          if (state is SettingsFormState) {
+          if (state is SettingsLoadedState) {
             _nameController.text = state.name;
             _userNameController.text =
                 '${state.userNameBase}${state.userNameAppended}';
@@ -68,7 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: CircularProgressIndicator(),
               );
 
-            case SettingsFormState():
+            case SettingsLoadedState():
               if (state.pending) {
                 return const Center(
                   child: CircularProgressIndicator(),

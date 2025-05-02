@@ -11,7 +11,7 @@ final class SettingsInitial extends SettingsState {}
 
 final class SettingsLoading extends SettingsState {}
 
-final class SettingsFormState extends SettingsState {
+final class SettingsLoadedState extends SettingsState {
   final String name;
   final String userNameBase;
   final String userNameAppended;
@@ -20,7 +20,7 @@ final class SettingsFormState extends SettingsState {
   final bool saved;
   final String error;
 
-  const SettingsFormState({
+  const SettingsLoadedState({
     required this.name,
     required this.userNameBase,
     required this.userNameAppended,
@@ -41,7 +41,7 @@ final class SettingsFormState extends SettingsState {
     String? error,
     bool? saved,
   }) {
-    return SettingsFormState(
+    return SettingsLoadedState(
       name: name ?? this.name,
       userNameBase: userNameBase ?? this.userNameBase,
       userNameAppended: userNameAppended ?? this.userNameAppended,
