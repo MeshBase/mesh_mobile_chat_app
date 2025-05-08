@@ -52,11 +52,12 @@ class DatabaseHelper {
       {'name': 'Alice', 'username': 'alice123'},
       {'name': 'Bob', 'username': 'bob456'},
       {'name': 'Charlie', 'username': 'charlie789'},
+      {'id': 'b01b1320-6660-4076-b847-c675ce8cb5f7', 'name': 'Charlie', 'username': 'charlie789'},
     ];
 
     for (var user in dummyUsers) {
       await db.insert('users', {
-        'id': _uuid.v4(),
+        'id': user['id'] ?? _uuid.v4(),
         'name': user['name']!,
         'username': user['username']!,
       });
