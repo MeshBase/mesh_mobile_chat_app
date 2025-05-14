@@ -1,47 +1,37 @@
-part of 'register_bloc.dart';
+part of 'settings_bloc.dart';
 
-sealed class RegisterState extends Equatable {
-  const RegisterState();
+sealed class SettingsState extends Equatable {
+  const SettingsState();
 
   @override
   List<Object> get props => [];
 }
 
-final class RegisterInitial extends RegisterState {}
+final class SettingsInitial extends SettingsState {}
 
-final class RegisterLoading extends RegisterState {}
+final class SettingsLoading extends SettingsState {}
 
-final class Registered extends RegisterState {
-  final bool wasAlreadyRegistered;
-  final RegisterModel? user;
-  const Registered({
-    required this.wasAlreadyRegistered,
-    required this.user,
-  });
-
-  @override
-  List<Object> get props => [wasAlreadyRegistered];
-}
-
-final class FormActiveRegistration extends RegisterState {
+final class SettingsLoadedState extends SettingsState {
   final String name;
   final String userNameBase;
   final String userNameAppended;
 
   final bool pending;
+  final bool saved;
   final String error;
 
-  const FormActiveRegistration({
+  const SettingsLoadedState({
     required this.name,
     required this.userNameBase,
     required this.userNameAppended,
     required this.pending,
     required this.error,
+    required this.saved,
   });
 
   @override
   List<Object> get props =>
-      [name, userNameBase, userNameAppended, pending, error];
+      [name, userNameBase, userNameAppended, pending, error, saved];
 
   copyWith({
     String? name,
@@ -49,13 +39,15 @@ final class FormActiveRegistration extends RegisterState {
     String? userNameAppended,
     bool? pending,
     String? error,
+    bool? saved,
   }) {
-    return FormActiveRegistration(
+    return SettingsLoadedState(
       name: name ?? this.name,
       userNameBase: userNameBase ?? this.userNameBase,
       userNameAppended: userNameAppended ?? this.userNameAppended,
       pending: pending ?? this.pending,
       error: error ?? this.error,
+      saved: saved ?? this.saved,
     );
   }
 }
