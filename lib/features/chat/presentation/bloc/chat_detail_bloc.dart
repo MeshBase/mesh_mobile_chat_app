@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
-import 'package:mesh_base_flutter/mesh_base_flutter.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:mesh_mobile/common/mesh_helpers/message_interactions.dart';
 import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/chat/domain/chat_detail_model.dart';
 
@@ -11,48 +11,61 @@ part 'chat_detail_event.dart';
 part 'chat_detail_state.dart';
 
 class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
-  final mesh = MeshBaseFlutter();
+  MessageInteractionsListener? listener;
+
   ChatDetailBloc() : super(ChatDetailInitial()) {
-    on<GetChatDetail>(_fetchDataFromDb);
+    on<GetChatDetail>(_fetchData);
     on<SendChat>(_sendData);
     on<RecieveChat>(_recieveData);
   }
 
-  _initMesh() async {
-    try {
-      await mesh.turnOn(); //No effect if already on
-      mesh.subscribe(MeshManagerListener(onDataReceivedForSelf: (data) {
-        if (state is ChatDetailLoaded &&
-            (state as ChatDetailLoaded).chatId == data.sender) {}
-      }));
-    } catch (e) {
-      debugPrint('[X] Error turning on mesh: $e');
-    }
-  }
-
-  FutureOr<void> _fetchDataFromDb(GetChatDetail event, emit) async {
+  FutureOr<void> _fetchData(GetChatDetail event, emit) async {
     emit(ChatDetailLoading());
     await DatabaseHelper.db;
     final messageData = await DatabaseHelper.getMessagesByChatId(event.chatId);
 
-    List<ChatDetailModel> dummyData = [
-      const ChatDetailModel(content: "Hello", isSender: false),
-      const ChatDetailModel(content: "Hi", isSender: true),
-      const ChatDetailModel(
-          content: "I'm doing good, how are you?", isSender: false)
-    ];
+    List<ChatDetailModel> messages = [];
 
     for (var message in messageData) {
-      dummyData.add(ChatDetailModel(
+      messages.add(ChatDetailModel(
           isSender: message['isSender'] == 1, content: message['content']));
     }
-    emit(ChatDetailLoaded(chats: dummyData, chatId: event.chatId));
+
+    //Storing messages in Database is already handled in chat_list_bloc
+    try {
+      //To stop adding listeners whenever new chats are opened
+      if (listener != null) MessageInteractions.removeListener(listener!);
+
+      listener = (messageDto, sourceUUID) {
+        if (state is ChatDetailLoaded &&
+            (state as ChatDetailLoaded).chatId == sourceUUID) {
+          add(RecieveChat(
+              chatContent: ChatDetailModel(
+                  isSender: false, content: messageDto.message)));
+        }
+      };
+
+      MessageInteractions.addListener(listener!);
+      await MessageInteractions.start();
+    } catch (e) {
+      //TODO: consider showing a snack bar when encountering errors
+      debugPrint('[X] Could not load chat detail. Error:$e');
+    }
+    emit(ChatDetailLoaded(chats: messages, chatId: event.chatId));
   }
 
   FutureOr<void> _sendData(SendChat event, emit) async {
     if (state is ChatDetailLoaded) {
       final chatState = state as ChatDetailLoaded;
       final List<ChatDetailModel> currentChat = List.of(chatState.chats);
+      try {
+        await MessageInteractions.send(
+            event.chatContent.content, chatState.chatId);
+      } catch (e) {
+        debugPrint('[X] Could not send message. Error:$e');
+        return;
+      }
+
       await DatabaseHelper.storeMessage(
         chatId: chatState.chatId,
         senderId: 'placeholder', // Unnecessary data for now
@@ -68,12 +81,8 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     if (state is ChatDetailLoaded) {
       final chatState = state as ChatDetailLoaded;
       final List<ChatDetailModel> currentChat = List.of(chatState.chats);
-      await DatabaseHelper.storeMessage(
-        chatId: chatState.chatId,
-        senderId: 'placeholder', // Unnecessary data for now
-        content: event.chatContent.content,
-        isSender: event.chatContent.isSender,
-      );
+      //Storing messages is handled by chat_list_bloc so that there is
+      // no need to be in chat detail view to store messages
       currentChat.add(event.chatContent);
       emit(ChatDetailLoaded(chats: currentChat, chatId: chatState.chatId));
     }

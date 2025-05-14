@@ -2,7 +2,7 @@ import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/nearby_users/domain/nearby_user_summary.dart';
 
 class NearbyRepository {
-  Future<NearbyUserSummary> fetchNearbyUserSummary(String userId) async {
+  Future<NearbyUserSummary?> fetchNearbyUserSummary(String userId) async {
     final dbClient = await DatabaseHelper.db;
 
     final result = await dbClient.rawQuery('''
@@ -53,15 +53,17 @@ class NearbyRepository {
       );
     } else {
       // Return dummy data if the user does not exist
-      return NearbyUserSummary(
-        userId: userId,
-        name: 'Unknown User',
-        username: 'unknown',
-        initial: "-",
-        lastMessage: null,
-        lastMessageTime: null,
-        isOnline: false,
-      );
+      return null;
+      //TODO: remove comment
+      // return NearbyUserSummary(
+      //   userId: userId,
+      //   name: 'Unknown User',
+      //   username: 'unknown',
+      //   initial: "-",
+      //   lastMessage: null,
+      //   lastMessageTime: null,
+      //   isOnline: false,
+      // );
     }
   }
 }

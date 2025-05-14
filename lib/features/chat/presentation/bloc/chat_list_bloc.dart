@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mesh_base_flutter/mesh_base_flutter.dart';
+import 'package:mesh_mobile/common/mesh_helpers/mesh_dto.dart';
+import 'package:mesh_mobile/common/mesh_helpers/message_interactions.dart';
+import 'package:mesh_mobile/common/mesh_helpers/nearyby_discovery.dart';
+import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/chat/data/chat_repository.dart';
 import 'package:mesh_mobile/features/chat/domain/chat_summary.dart';
 
@@ -10,10 +12,8 @@ part 'chat_list_state.dart';
 
 class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
   final ChatRepository chatRepository;
-  final MeshBaseFlutter mesh = MeshBaseFlutter();
 
   ChatListBloc({required this.chatRepository}) : super(ChatListInitial()) {
-    _initMesh();
     on<LoadChatList>(_onLoadChatList);
     on<RefreshChatList>(_onLoadChatList);
   }
@@ -23,51 +23,53 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     emit(ChatListLoading());
 
     try {
-      emit(ChatListLoaded(await _compileSummaries()));
+      final chats = await chatRepository.fetchChatSummaries();
+
+      //listen to online statuses
+      await NearbyDiscovery.addListener((identities) async {
+        final onlineUUIDs = <String>{};
+        for (var (uuid, _) in identities) {
+          onlineUUIDs.add(uuid);
+        }
+        final chats = (await chatRepository.fetchChatSummaries()).map((chat) {
+          return chat.copyWith(isOnline: onlineUUIDs.contains(chat.chatId));
+        }).toList();
+        emit(ChatListLoaded(chats));
+      });
+
+      //listen to incoming messages even when chat detail is not opened
+      await MessageInteractions.addListener((messageDto, sourceUUID) async {
+        final chats = await chatRepository.fetchChatSummaries();
+
+        ChatSummary? chat =
+            chats.where((chat) => chat.chatId == sourceUUID).isNotEmpty
+                ? chats.firstWhere((chat) => chat.chatId == sourceUUID)
+                : null;
+
+        BroadcastedIdentityDTO? identity = NearbyDiscovery.getIdentities()
+            .where((identity) => identity.$1 == sourceUUID);
+
+        await DatabaseHelper.db;
+        if (chat == null) {
+          await DatabaseHelper.createUser(
+              userID: sourceUUID,
+              name: identity?.name ?? 'Unknown',
+              username: identity?.userName ?? 'unknown');
+        }
+
+        //TODO: remove placeholder
+        await DatabaseHelper.storeMessage(
+            chatId: sourceUUID,
+            senderId: 'placeholder',
+            content: messageDto.message,
+            isSender: false);
+      });
+
+      emit(ChatListLoaded(chats));
     } catch (e) {
       emit(ChatListError('Failed to load chats, Exception: ${e.toString()}'));
     }
   }
 
-  _initMesh() async {
-    try {
-      await mesh.turnOn(); //No effect if already on
-      mesh.subscribe(MeshManagerListener(onNeighborConnected: (device) {
-        add(RefreshChatList());
-      }));
-    } catch (e) {
-      debugPrint('[X] Error turning on mesh: $e');
-    }
-  }
-
-  Future<List<ChatSummary>> _compileSummaries() async {
-    final List<ChatSummary> chats = await chatRepository.fetchChatSummaries();
-    List<Device> devices = await mesh.getNeighbors();
-
-    final List<ChatSummary> newChats = [];
-
-    for (var device in devices) {
-      var found = false;
-      for (var i = 0; i < chats.length; i++) {
-        var chat = chats[i];
-        if (device.uuid == chat.chatId) {
-          chats[i] = chat.copyWith(isOnline: true);
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        newChats.add(ChatSummary(
-          chatId: device.uuid,
-          name: device.name,
-          username: '<unknown>',
-          initial: device.name[0].toUpperCase(),
-          lastMessage: '',
-          lastMessageTime: DateTime.now(),
-          isOnline: true,
-        ));
-      }
-    }
-    return [...chats, ...newChats];
-  }
+  _listenOnlineStatuses() async {}
 }
