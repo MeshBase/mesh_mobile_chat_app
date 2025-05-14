@@ -15,7 +15,7 @@ class RegisterPage extends StatelessWidget {
         child: BlocListener(
             bloc: context.read<RegisterBloc>(),
             listener: (context, state) {
-              if (state is RegistrationSubmitted) {
+              if (state is Registered && !state.wasAlreadyRegistered) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text("Registration successful!"),
@@ -34,7 +34,7 @@ class RegisterPage extends StatelessWidget {
                     backgroundColor: colorScheme.error,
                   ),
                 );
-              } else if (state is AlreadyRegistered) {
+              } else if (state is Registered && state.wasAlreadyRegistered) {
                 context.go(Routes.home);
               }
             },
@@ -57,10 +57,7 @@ class RegisterPage extends StatelessWidget {
                         child: CircularProgressIndicator(),
                       );
 
-                    case AlreadyRegistered():
-                      return Container();
-
-                    case RegistrationSubmitted():
+                    case Registered():
                       return Container();
 
                     case FormActiveRegistration():
@@ -153,7 +150,7 @@ class RegisterPage extends StatelessWidget {
                               const SizedBox(height: 40),
                               CustomButton(
                                 text: "Register",
-                                onPressed: () {
+                                onPressed: () async {
                                   if (_formKey.currentState!.validate()) {
                                     bloc.add(SubmitRegistration());
                                   }

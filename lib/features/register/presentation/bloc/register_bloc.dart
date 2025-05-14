@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mesh_mobile/database/database_helper.dart';
+import 'package:mesh_mobile/features/register/domain/register_model.dart';
 
 part 'register_event.dart';
 part 'register_state.dart';
@@ -16,15 +19,23 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
 
   FutureOr<void> _getIsRegistered(event, emit) async {
     emit(RegisterLoading());
-    await Future.delayed(const Duration(seconds: 2));
-    emit(FormActiveRegistration(
-      pending: false,
-      error: '',
-      name: '',
-      userNameBase: '',
-      userNameAppended:
-          '_${generateRandomString(length: 4)}_${generateRandomString(length: 4)}',
-    ));
+    final user = await DatabaseHelper.getRegisteredUser();
+    debugPrint('[X] user is $user');
+
+    if (user != null) {
+      emit(Registered(
+          user: RegisterModel(name: user.name, userName: user.userName),
+          wasAlreadyRegistered: true));
+    } else {
+      emit(FormActiveRegistration(
+        pending: false,
+        error: '',
+        name: '',
+        userNameBase: '',
+        userNameAppended:
+            '_${generateRandomString(length: 4)}_${generateRandomString(length: 4)}',
+      ));
+    }
   }
 
   _changeName(ChangeName event, emit) {
@@ -61,10 +72,25 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   FutureOr<void> _submitRegistration(SubmitRegistration event, emit) async {
     if (state is FormActiveRegistration) {
       final formState = state as FormActiveRegistration;
-      emit(formState.copyWith(error: '', pending: true));
-      await Future.delayed(const Duration(seconds: 2));
-      emit(RegistrationSubmitted());
-      // emit(formState.copyWith( error: 'Registration failed', pending: false,));
+
+      try {
+        await DatabaseHelper.upsertRegisteredUser(
+          formState.name,
+          formState.userNameBase + formState.userNameAppended,
+        );
+        final user = await DatabaseHelper.getRegisteredUser();
+        if (user == null) {
+          throw Exception('User not found after registration');
+        }
+        emit(Registered(
+            user: RegisterModel(name: user.name, userName: user.userName),
+            wasAlreadyRegistered: false));
+      } catch (e) {
+        emit(formState.copyWith(
+          error: 'Something went wrong - ${e.toString()}',
+          pending: false,
+        ));
+      }
     }
   }
 }

@@ -1,8 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-
+import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
 class DatabaseHelper {
@@ -11,6 +12,8 @@ class DatabaseHelper {
 
   static Future<Database> get db async {
     if (_db != null) return _db!;
+    //Only uncomment to force database recreation!
+    // await deleteDatabase();
     _db = await _initDb();
     return _db!;
   }
@@ -23,6 +26,7 @@ class DatabaseHelper {
       path,
       version: 1,
       onCreate: (Database db, int version) async {
+        debugPrint("[X]Database created");
         await db.execute('''
         CREATE TABLE users (
             id TEXT PRIMARY KEY,
@@ -41,6 +45,13 @@ class DatabaseHelper {
           )
         ''');
 
+        await db.execute('''
+        CREATE TABLE IF NOT EXISTS registered_user (
+          name TEXT,
+          username TEXT
+        )
+      ''');
+
         await seedDummyUsers(db);
       },
     );
@@ -52,11 +63,12 @@ class DatabaseHelper {
       {'name': 'Alice', 'username': 'alice123'},
       {'name': 'Bob', 'username': 'bob456'},
       {'name': 'Charlie', 'username': 'charlie789'},
+      {'id': 'b01b1320-6660-4076-b847-c675ce8cb5f7', 'name': 'Charlie', 'username': 'charlie789'},
     ];
 
     for (var user in dummyUsers) {
       await db.insert('users', {
-        'id': _uuid.v4(),
+        'id': user['id'] ?? _uuid.v4(),
         'name': user['name']!,
         'username': user['username']!,
       });
@@ -132,5 +144,46 @@ class DatabaseHelper {
       whereArgs: [chatId],
       orderBy: 'timestamp ASC',
     );
+  }
+
+//for development purposes only, use to force adding new tables inside onInit()
+  static Future<void> deleteDatabase() async {
+    final documentsDirectory = await getApplicationSupportDirectory();
+    final path = join(documentsDirectory.path, 'chat_app.db');
+    final dbFile = File(path);
+
+    if (await dbFile.exists()) {
+      debugPrint('[X] deleted db file');
+      await dbFile.delete();
+    } else {
+      debugPrint('[X] no db file to delete, skipping');
+    }
+  }
+
+  static Future<void> upsertRegisteredUser(String name, String userName) async {
+    final dbClient = await db;
+    await dbClient.delete('registered_user');
+    await dbClient.insert('registered_user', {
+      'name': name,
+      'username': userName,
+    });
+  }
+
+  static Future<({String name, String userName})?> getRegisteredUser() async {
+    final dbClient = await db;
+    final rows = await dbClient.query(
+      'registered_user',
+      limit: 1,
+    );
+    if (rows.isNotEmpty) {
+      final name = rows.first['name'];
+      final username = rows.first['username'];
+
+      return (
+        name: name.toString(),
+        userName: username.toString(),
+      );
+    }
+    return null;
   }
 }

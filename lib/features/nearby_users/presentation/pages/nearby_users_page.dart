@@ -1,77 +1,100 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mesh_mobile/common/widgets/list_item.dart';
 import 'package:mesh_mobile/features/chat/domain/user_info_model.dart';
+import 'package:mesh_mobile/features/nearby_users/presentation/bloc/nearby_users_bloc.dart';
 import 'package:mesh_mobile/route_names.dart';
+import 'package:mesh_mobile/route_observer.dart';
 
-class NearbyUsersPage extends StatelessWidget {
+class NearbyUsersPage extends StatefulWidget {
   const NearbyUsersPage({super.key});
 
   @override
+  State<NearbyUsersPage> createState() => _NearbyUsersPageState();
+}
+
+class _NearbyUsersPageState extends State<NearbyUsersPage> with RouteAware {
+  late final NearbyUsersBloc bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    bloc = context.read<NearbyUsersBloc>();
+    bloc.add(LoadNearbyUsers());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    bloc.add(LoadNearbyUsers());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final users = <Map<String, dynamic>>[
-      {
-        "name": "Abebe Kebede",
-        "statusMessage": "I'm doing good, how are you?",
-        "isOnline": true,
-        "initial": "A",
-        "notificationCount": null,
-        "chatId": 'c2029bb3-00d0-470a-a6e1-e7f834a55eca'
-      },
-      {
-        "name": "Meron Kebede",
-        "statusMessage": "Hello",
-        "isOnline": true,
-        "initial": "M",
-        "notificationCount": 1,
-        "chatId": 'f69cbaa4-c358-4063-b6d4-a5bf84bcc86c'
-      },
-      {
-        "name": "Asmamaw Demeke",
-        "statusMessage": "Start a conversation",
-        "isOnline": true,
-        "initial": "A",
-        "notificationCount": null,
-        "chatId": '13207541-8916-4b0c-84cf-cbb3dad351e0'
-      },
-      {
-        "name": "Bethel Shemsu",
-        "statusMessage": "Start a conversation",
-        "isOnline": true,
-        "initial": "B",
-        "notificationCount": null,
-        "chatId": '71a826df-1a1c-4a3c-bae4-c8feb075471a'
-      },
-    ];
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: users.length,
-              itemBuilder: (context, index) {
-                final user = users[index];
-                return UserListItem(
-                  name: user['name']!,
-                  statusMessage: user['statusMessage']!,
-                  isOnline: user['isOnline']!,
-                  initial: user['initial']!,
-                  notificationCount: user['notificationCount'],
-                  onPressed: () {
-                    final data = UserInfoModel(
-                      chatId: user['chatId'],
-                      name: user['name'],
-                      userId: user['userId'],
-                    );
-                    context.push(Routes.chat, extra: data);
-                  },
-                );
-              },
+    return BlocBuilder<NearbyUsersBloc, NearbyUsersState>(
+        builder: (context, state) {
+      switch (state) {
+        case NearbyUsersInitial() || NearbyUsersLoading():
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                Text('${state.runtimeType}'),
+                const SizedBox(height: 8),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
+        case NearbyUsersLoaded():
+          final users = state.nearbyUsers;
+          return Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      final user = users[index];
+                      return UserListItem(
+                        name: user.name,
+                        statusMessage:
+                            user.lastMessage ?? "Start a Conversation",
+                        isOnline: user.isOnline,
+                        initial: user.initial,
+                        notificationCount:
+                            user.unreadCount > 0 ? user.unreadCount : null,
+                        onPressed: () {
+                          // when clicked create chat?
+                          final data = UserInfoModel(
+                            chatId: user.userId,
+                            name: user.name,
+                            userId: user.userId,
+                          );
+                          context.push(Routes.chat, extra: data);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        default:
+          return Center(child: Text('Unknown state $state'));
+      }
+    });
   }
 }
