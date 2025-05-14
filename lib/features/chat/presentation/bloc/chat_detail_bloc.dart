@@ -1,6 +1,9 @@
 import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:mesh_base_flutter/mesh_base_flutter.dart';
 import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/chat/domain/chat_detail_model.dart';
 
@@ -8,10 +11,23 @@ part 'chat_detail_event.dart';
 part 'chat_detail_state.dart';
 
 class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
+  final mesh = MeshBaseFlutter();
   ChatDetailBloc() : super(ChatDetailInitial()) {
     on<GetChatDetail>(_fetchDataFromDb);
     on<SendChat>(_sendData);
     on<RecieveChat>(_recieveData);
+  }
+
+  _initMesh() async {
+    try {
+      await mesh.turnOn(); //No effect if already on
+      mesh.subscribe(MeshManagerListener(onDataReceivedForSelf: (data) {
+        if (state is ChatDetailLoaded &&
+            (state as ChatDetailLoaded).chatId == data.sender) {}
+      }));
+    } catch (e) {
+      debugPrint('[X] Error turning on mesh: $e');
+    }
   }
 
   FutureOr<void> _fetchDataFromDb(GetChatDetail event, emit) async {

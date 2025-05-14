@@ -21,6 +21,28 @@ class ChatSummary extends Equatable {
     this.unreadCount = 0,
   });
 
+  ChatSummary copyWith({
+    String? chatId,
+    String? name,
+    String? username,
+    String? lastMessage,
+    DateTime? lastMessageTime,
+    String? initial,
+    bool? isOnline,
+    int? unreadCount,
+  }) {
+    return ChatSummary(
+      chatId: chatId ?? this.chatId,
+      name: name ?? this.name,
+      username: username ?? this.username,
+      initial: initial ?? this.initial,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      isOnline: isOnline ?? this.isOnline,
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
+
   @override
   List<Object?> get props => [
         chatId,
