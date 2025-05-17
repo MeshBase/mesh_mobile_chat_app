@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mesh_mobile/common/mesh_helpers/message_interactions.dart';
-import 'package:mesh_mobile/common/mesh_helpers/nearyby_discovery.dart';
+import 'package:mesh_mobile/common/mesh_helpers/message_interactions_service.dart';
+import 'package:mesh_mobile/common/mesh_helpers/nearyby_discovery_service.dart';
 import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/nearby_users/data/nearby_repository.dart';
 import 'package:mesh_mobile/features/nearby_users/domain/nearby_user_summary.dart';
@@ -19,6 +19,7 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
   NearbyUsersBloc({required this.nearbyRepository})
       : super(NearbyUsersInitial()) {
     on<LoadNearbyUsers>(_onLoadNearbyUsers);
+    on<UpdateNearbyUsers>(_onUpdateUsers);
   }
 
   Future<List<NearbyUserSummary>> _prepareNearbyUsersList(
@@ -56,20 +57,22 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
         emit(const NearbyUsersError("User not registered yet!"));
         return;
       }
-      if (discoveryListener != null) {
-        NearbyDiscovery.removeListener(discoveryListener!);
-      }
+
       discoveryListener = (identities) async {
         try {
           var users = await _prepareNearbyUsersList(identities);
-          emit(NearbyUsersLoaded(users));
+          add(UpdateNearbyUsers(nearbyUsers: users, error: null));
         } catch (e) {
-          emit(NearbyUsersError(
-              'Failed to update Nearby Devices, Exception: ${e.toString()}'));
+          List<NearbyUserSummary> users = [];
+          if (state is NearbyUsersLoaded) {
+            users = (state as NearbyUsersLoaded).nearbyUsers;
+          }
+          //TODO: Implement a snack bar to show loaded state errors even though they shouldn't happen
+          add(UpdateNearbyUsers(nearbyUsers: users, error: e.toString()));
         }
       };
-      NearbyDiscovery.addListener(discoveryListener!);
-      await NearbyDiscovery.start(user.name, user.userName);
+      NearbyDiscoveryService.addListener(discoveryListener!);
+      await NearbyDiscoveryService.start(user.name, user.userName);
     } catch (e) {
       emit(NearbyUsersError(
           'Failed to get Nearby Devices, Exception: ${e.toString()}'));
@@ -77,18 +80,34 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
 
     //update to show new messages from nearby users
     try {
-      if (messageInteractionsListener != null) {
-        MessageInteractions.removeListener(messageInteractionsListener!);
-      }
       messageInteractionsListener = (messageDto, sourceUUID) async {
         //Assuming chat_list_block updated the database
-        add(LoadNearbyUsers());
+        add(UpdateNearbyUsers(
+            nearbyUsers: await _prepareNearbyUsersList(
+                NearbyDiscoveryService.getIdentities()),
+            error: ""));
       };
-      MessageInteractions.addListener(messageInteractionsListener!);
-      await MessageInteractions.start();
+      MessageInteractionsService.addListener(messageInteractionsListener!);
+      await MessageInteractionsService.start();
     } catch (e) {
       emit(NearbyUsersError(
           'Could not listen to nearby device messages. Exception: ${e.toString()}'));
     }
+  }
+
+  Future<void> _onUpdateUsers(
+      UpdateNearbyUsers event, Emitter<NearbyUsersState> emit) async {
+    emit(NearbyUsersLoaded(event.nearbyUsers));
+  }
+
+  @override
+  Future<void> close() {
+    if (discoveryListener != null) {
+      NearbyDiscoveryService.removeListener(discoveryListener!);
+    }
+    if (messageInteractionsListener != null) {
+      MessageInteractionsService.removeListener(messageInteractionsListener!);
+    }
+    return super.close();
   }
 }

@@ -8,12 +8,14 @@ import 'mesh_dto.dart';
 typedef NearbyDiscoveryListener = void Function(
     List<(String, BroadcastedIdentityDTO)> identity);
 
-class NearbyDiscovery {
+class NearbyDiscoveryService {
   static final MeshBaseFlutter mesh = MeshBaseFlutter();
   static String _name = "-";
   static String _userName = "-";
   static bool _isStarted = false;
   static List<NearbyDiscoveryListener> listeners = [];
+  static int HEARTBEAT_SECONDS = 5;
+  static int HEATBEAT_MAX_DELAY = 2;
 
   static final Map<String, (DateTime, BroadcastedIdentityDTO)> _identities = {};
 
@@ -42,6 +44,7 @@ class NearbyDiscovery {
   }
 
   static _listen() async {
+    debugPrint('[X] listening to nearby devices');
     await mesh.turnOn();
 
     //show empty list at first
@@ -49,12 +52,15 @@ class NearbyDiscovery {
       listener(_currentIdentityList());
     }
 
-    mesh.subscribe(MeshManagerListener(onDataReceivedForSelf: (protocol) {
-      if (!BroadcastedIdentityDTO.canDecode(protocol.body)) return;
+    await mesh.subscribe(MeshManagerListener(onDataReceivedForSelf: (protocol) {
+      if (!BroadcastedIdentityDTO.canDecode(protocol.body)) {
+        return;
+      }
 
       final identity = BroadcastedIdentityDTO.fromBytes(protocol.body);
       final sender = protocol.sender;
-      final expiry = DateTime.now().add(const Duration(seconds: 2));
+      final expiry = DateTime.now()
+          .add(Duration(seconds: HEARTBEAT_SECONDS + HEATBEAT_MAX_DELAY));
 
       final isNew = !_identities.containsKey(sender);
       _identities[sender] = (expiry, identity);
@@ -65,18 +71,21 @@ class NearbyDiscovery {
         }
       }
 
-      //to consider offline if no heartbeat is heard in 2 seconds
-      Future.delayed(const Duration(seconds: 2), () {
+      Future.delayed(Duration(seconds: HEARTBEAT_SECONDS + HEATBEAT_MAX_DELAY),
+          () {
         final now = DateTime.now();
         final newExpiryTime = _identities[sender]?.$1;
         if (newExpiryTime == null || newExpiryTime.isBefore(now)) {
           _identities.remove(sender);
-          debugPrint('[X] ${identity.name} heart beat stopped');
-          for (var listener in listeners) {
-            listener(_currentIdentityList());
-          }
+          debugPrint(
+              '[X] [${identity.name}][${identity.userName}] heart beat stopped');
         } else {
-          debugPrint('[X] ${identity.name} heart beat continued');
+          debugPrint(
+              '[X] ${identity.name}-${identity.userName} heart beat continued ${newExpiryTime.millisecondsSinceEpoch - now.millisecondsSinceEpoch}ms before expiry');
+        }
+
+        for (var listener in listeners) {
+          listener(_currentIdentityList());
         }
       });
     }));
@@ -92,8 +101,15 @@ class NearbyDiscovery {
     final myIdentity = BroadcastedIdentityDTO(_name, _userName);
 
     //to broadcast heartbeat every second in 100 hop radius for online status
-    Timer.periodic(const Duration(seconds: 1), (timer) {
-      mesh.send(
+    Timer.periodic(Duration(seconds: HEARTBEAT_SECONDS), (timer) async {
+      var neighbors = await mesh.getNeighbors();
+      if (!neighbors.isNotEmpty) {
+        debugPrint('[X] has no neighbors to broadcast to ${timer.tick}');
+        return;
+      }
+      debugPrint('[X] broadcasting to ${neighbors.length} neighbors');
+
+      var result = await mesh.send(
         protocol: MeshProtocol(
           messageType: ProtocolType.RAW_BYTES_MESSAGE,
           remainingHops: 100,
@@ -103,6 +119,14 @@ class NearbyDiscovery {
           body: myIdentity.toBytes(),
         ),
       );
+
+      if (result.error != null) {
+        debugPrint('[X] could not broadcast ${result.error?.message}');
+      } else if (!result.acked) {
+        debugPrint(
+            '[X] broadcast was not acked - result was acked: ${result.acked},error: ${result.error}, response: ${result.response}');
+      }
     });
   }
+  //TODO: Implement stop()
 }
