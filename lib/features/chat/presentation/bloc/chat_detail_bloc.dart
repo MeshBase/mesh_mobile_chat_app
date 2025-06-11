@@ -2,21 +2,30 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:mesh_base_flutter/mesh_base_flutter.dart';
+import 'package:mesh_mobile/common/mesh_helpers/mesh_dto.dart';
+import 'package:mesh_mobile/common/mesh_helpers/message_interactions_service.dart';
 import 'package:mesh_mobile/database/database_helper.dart';
+import 'package:mesh_mobile/features/chat/data/chat_repository.dart';
 import 'package:mesh_mobile/features/chat/domain/chat_detail_model.dart';
 
 part 'chat_detail_event.dart';
 part 'chat_detail_state.dart';
 
 class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
-  ChatDetailBloc() : super(ChatDetailInitial()) {
+  MessageInteractionsListener? _messageInteractionsListener;
+  final ChatRepository chatRepository;
+
+  ChatDetailBloc({required this.chatRepository}) : super(ChatDetailInitial()) {
     on<GetChatDetail>(_fetchDataFromDb);
     on<SendChat>(_sendData);
-    on<RecieveChat>(_recieveData);
+    on<RecieveChat>(_receiveData);
   }
 
   FutureOr<void> _fetchDataFromDb(GetChatDetail event, emit) async {
     emit(ChatDetailLoading());
+
+    _registerMessageListener();
     await DatabaseHelper.db;
     final messageData = await DatabaseHelper.getMessagesByChatId(event.chatId);
 
@@ -38,29 +47,49 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     if (state is ChatDetailLoaded) {
       final chatState = state as ChatDetailLoaded;
       final List<ChatDetailModel> currentChat = List.of(chatState.chats);
-      await DatabaseHelper.storeMessage(
-        chatId: chatState.chatId,
-        senderId: 'placeholder', // Unnecessary data for now
-        content: event.chatContent.content,
-        isSender: event.chatContent.isSender,
-      );
-      currentChat.add(event.chatContent);
-      emit(ChatDetailLoaded(chats: currentChat, chatId: chatState.chatId));
+
+
+      final deviceId = await MeshBaseFlutter().getId();
+
+
+        MessageInteractionsService.send(event.chatContent.content, chatState.chatId);
+
+        await DatabaseHelper.storeMessage(
+          chatId: chatState.chatId,
+          senderId: chatState.chatId,
+          content: event.chatContent.content,
+          isSender: event.chatContent.isSender,
+        );
+
+        currentChat.add(event.chatContent);
+        emit(ChatDetailLoaded(chats: currentChat, chatId: chatState.chatId));
+
     }
   }
 
-  FutureOr<void> _recieveData(RecieveChat event, emit) async {
+  FutureOr<void> _receiveData(RecieveChat event, emit) async {
     if (state is ChatDetailLoaded) {
       final chatState = state as ChatDetailLoaded;
       final List<ChatDetailModel> currentChat = List.of(chatState.chats);
-      await DatabaseHelper.storeMessage(
-        chatId: chatState.chatId,
-        senderId: 'placeholder', // Unnecessary data for now
-        content: event.chatContent.content,
-        isSender: event.chatContent.isSender,
-      );
-      currentChat.add(event.chatContent);
-      emit(ChatDetailLoaded(chats: currentChat, chatId: chatState.chatId));
+
+        await DatabaseHelper.storeMessage(
+          chatId: chatState.chatId,
+          senderId: chatState.chatId,
+          content: event.chatContent.content,
+          isSender: event.chatContent.isSender,
+        );
+        currentChat.add(event.chatContent);
+        emit(ChatDetailLoaded(chats: currentChat, chatId: chatState.chatId));
     }
   }
+
+  void _registerMessageListener() async {
+    _messageInteractionsListener = (MessageDTO messageDto, String sourceUUID) async {
+      final model = ChatDetailModel(isSender: false, content: messageDto.message,);
+      add(RecieveChat(chatContent: model));
+    };
+    
+    MessageInteractionsService.addListener(_messageInteractionsListener!);
+  }
+
 }

@@ -48,7 +48,6 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
     Emitter<NearbyUsersState> emit,
   ) async {
     emit(NearbyUsersLoading());
-
     //listen to new nearby devices changes
     try {
       await DatabaseHelper.db;

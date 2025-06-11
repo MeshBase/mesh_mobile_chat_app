@@ -56,4 +56,21 @@ class ChatRepository {
   static String _getInitial(String name) {
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
+
+  Future<String?> getDestinationUUID(String chatId, String myUUID) async {
+    final db = await DatabaseHelper.db;
+    final List<Map<String, dynamic>> result = await db.query(
+      'messages',
+      where: 'chatId = ? AND senderId != ?',
+      whereArgs: [chatId, myUUID],
+      orderBy: 'timestamp DESC',
+      limit: 1,
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['senderId'] as String;
+    }
+    return null;
+  }
+
 }

@@ -31,7 +31,7 @@ class MeshApp extends StatelessWidget {
       routerConfig: router,
       builder: (context, widget) {
         return MultiBlocProvider(providers: [
-          BlocProvider<ChatDetailBloc>(create: (context) => ChatDetailBloc()),
+          BlocProvider<ChatDetailBloc>(create: (context) => ChatDetailBloc(chatRepository: ChatRepository())),
           BlocProvider<ChatListBloc>(
               create: (context) =>
                   ChatListBloc(chatRepository: ChatRepository())),
