@@ -20,9 +20,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   @override
   void initState() {
     super.initState();
-    context
-        .read<ChatDetailBloc>()
-        .add(GetChatDetail(chatId: widget.userInfoModel.chatId, model: widget.userInfoModel));
+    context.read<ChatDetailBloc>().add(GetChatDetail(
+        chatId: widget.userInfoModel.chatId, model: widget.userInfoModel));
   }
 
   @override
@@ -40,7 +39,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   final bloc = context.read<ChatDetailBloc>();
 
                   if (state is ChatDetailInitial) {
-                    bloc.add(GetChatDetail(chatId: widget.userInfoModel.chatId, model: widget.userInfoModel));
+                    bloc.add(GetChatDetail(
+                        chatId: widget.userInfoModel.chatId,
+                        model: widget.userInfoModel));
                     return const Center(child: CircularProgressIndicator());
                   }
 
@@ -54,12 +55,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       itemBuilder: (context, index) {
                         final chatBubble = state.chats[index];
                         return ChatBubble(
-                          onTap: () => bloc.add(const RecieveChat(
-                            chatContent: ChatDetailModel(
-                              isSender: false,
-                              content: 'Evolution',
-                            ),
-                          )),
+                          onTap: () {},
                           textTime: DateTime.now(),
                           bubbleContent: chatBubble.content,
                           isSender: chatBubble.isSender,

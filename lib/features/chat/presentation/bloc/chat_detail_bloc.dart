@@ -37,18 +37,13 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     await DatabaseHelper.db;
     final messageData = await DatabaseHelper.getMessagesByChatId(event.chatId);
 
-    List<ChatDetailModel> dummyData = [
-      const ChatDetailModel(content: "Hello", isSender: false),
-      const ChatDetailModel(content: "Hi", isSender: true),
-      const ChatDetailModel(
-          content: "I'm doing good, how are you?", isSender: false)
-    ];
+    List<ChatDetailModel> msgData = [];
 
     for (var message in messageData) {
-      dummyData.add(ChatDetailModel(
+      msgData.add(ChatDetailModel(
           isSender: message['isSender'] == 1, content: message['content']));
     }
-    emit(ChatDetailLoaded(chats: dummyData, chatId: event.chatId));
+    emit(ChatDetailLoaded(chats: msgData, chatId: event.chatId));
   }
 
   FutureOr<void> _sendData(SendChat event, emit) async {
