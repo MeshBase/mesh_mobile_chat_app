@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/chat/domain/chat_summary.dart';
 
@@ -72,5 +73,46 @@ class ChatRepository {
     }
     return null;
   }
+
+  Future<void> ensureUserExistsIfNoMessages(
+      String myId, String otherUserId, String name, String username) async {
+    final db = await DatabaseHelper.db;
+
+    // Check if there are messages between the two users (either direction)
+    final messages = await db.query(
+      'messages',
+      where: '(senderId = ? AND chatId LIKE ?) OR (senderId = ? AND chatId LIKE ?)',
+      whereArgs: [
+        myId, '%$otherUserId%',
+        otherUserId, '%$myId%',
+      ],
+      limit: 1,
+    );
+
+    if (messages.isEmpty) {
+      // Check if the user already exists
+      final existingUser = await db.query(
+        'users',
+        where: 'id = ?',
+        whereArgs: [otherUserId],
+        limit: 1,
+      );
+
+      if (existingUser.isEmpty) {
+        // Create the user
+        await DatabaseHelper.createUser(
+          name: name,
+          username: username,
+          userID: otherUserId,
+        );
+        debugPrint('[X] Created new user $username with ID $otherUserId');
+      } else {
+        debugPrint('[X] User $otherUserId already exists, skipping insert');
+      }
+    } else {
+      debugPrint('[X] Message(s) already exist between $myId and $otherUserId');
+    }
+  }
+
 
 }

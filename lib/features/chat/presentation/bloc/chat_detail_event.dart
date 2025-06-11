@@ -9,11 +9,12 @@ sealed class ChatDetailEvent extends Equatable {
 
 final class GetChatDetail extends ChatDetailEvent {
   final String chatId;
+  final UserInfoModel model;
 
-  const GetChatDetail({required this.chatId});
+  const GetChatDetail({required this.chatId, required this.model});
 
   @override
-  List<Object> get props => [chatId];
+  List<Object> get props => [chatId, model];
 }
 
 final class SendChat extends ChatDetailEvent {

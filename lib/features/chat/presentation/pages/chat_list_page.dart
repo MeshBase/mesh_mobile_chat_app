@@ -69,6 +69,7 @@ class _ChatListPageState extends State<ChatListPage> with RouteAware {
                       name: chat.name,
                       chatId: chat.chatId,
                       userId: chat.chatId,
+                      userName: chat.username,
                     );
                     context.push(Routes.chat, extra: data);
                   },

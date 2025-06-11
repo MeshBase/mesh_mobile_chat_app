@@ -82,6 +82,7 @@ class _NearbyUsersPageState extends State<NearbyUsersPage> with RouteAware {
                             chatId: user.userId,
                             name: user.name,
                             userId: user.userId,
+                            userName: user.username,
                           );
                           context.push(Routes.chat, extra: data);
                         },

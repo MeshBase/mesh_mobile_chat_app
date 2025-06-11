@@ -51,6 +51,7 @@ dependencies:
   path: ^1.9.0
   mesh_base_flutter:
     path: "../mesh_base_libraries/mesh_base_flutter"
+  provider: ^6.1.5
 
 dev_dependencies:
   flutter_test:

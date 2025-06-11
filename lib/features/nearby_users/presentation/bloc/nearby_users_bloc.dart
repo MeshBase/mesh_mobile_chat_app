@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mesh_mobile/common/mesh_helpers/message_interactions_service.dart';
 import 'package:mesh_mobile/common/mesh_helpers/nearyby_discovery_service.dart';
@@ -29,6 +30,7 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
         var (uuid, identity) = item;
         var user = await nearbyRepository.fetchNearbyUserSummary(uuid);
         if (user == null) {
+          debugPrint("[X] user will always be null $uuid, $identity");
           return NearbyUserSummary(
               userId: uuid,
               name: identity.name,
@@ -81,6 +83,7 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
     try {
       messageInteractionsListener = (messageDto, sourceUUID) async {
         //Assuming chat_list_block updated the database
+        debugPrint("[X]list is aliveeeeee");
         add(UpdateNearbyUsers(
             nearbyUsers: await _prepareNearbyUsersList(
                 NearbyDiscoveryService.getIdentities()),
