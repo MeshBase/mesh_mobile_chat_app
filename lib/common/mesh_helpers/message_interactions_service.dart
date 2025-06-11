@@ -17,7 +17,7 @@ class MessageInteractionsService {
     if (_started) return;
     await _mesh.turnOn();
     await _listen();
-    await _broadcastRandomMessages();
+    // await _broadcastRandomMessages();
     _started = false;
   }
 
@@ -73,7 +73,7 @@ class MessageInteractionsService {
       messageId: -1,
       sender: id,
       destination: destination,
-      body: MessageDTO("re: $message").toBytes(),
+      body: MessageDTO(message).toBytes(),
     );
     await _mesh.send(protocol: protocol, keepMessageId: false).then((
       res,
