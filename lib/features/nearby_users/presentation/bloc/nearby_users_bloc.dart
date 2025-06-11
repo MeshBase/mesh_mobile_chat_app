@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mesh_mobile/common/mesh_helpers/message_interactions_service.dart';
 import 'package:mesh_mobile/common/mesh_helpers/nearyby_discovery_service.dart';
+import 'package:mesh_mobile/common/repositories/message_repository.dart';
 import 'package:mesh_mobile/database/database_helper.dart';
 import 'package:mesh_mobile/features/nearby_users/data/nearby_repository.dart';
 import 'package:mesh_mobile/features/nearby_users/domain/nearby_user_summary.dart';
@@ -14,13 +14,17 @@ part 'nearby_users_state.dart';
 
 class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
   final NearbyRepository nearbyRepository;
+  final MessageRepository messageRepository;
   NearbyDiscoveryListener? discoveryListener;
-  MessageInteractionsListener? messageInteractionsListener;
 
-  NearbyUsersBloc({required this.nearbyRepository})
-      : super(NearbyUsersInitial()) {
+  NearbyUsersBloc({
+    required this.nearbyRepository,
+    required this.messageRepository,
+  }) : super(NearbyUsersInitial()) {
     on<LoadNearbyUsers>(_onLoadNearbyUsers);
     on<UpdateNearbyUsers>(_onUpdateUsers);
+
+    _startListeningToMessages();
   }
 
   Future<List<NearbyUserSummary>> _prepareNearbyUsersList(
@@ -78,23 +82,6 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
       emit(NearbyUsersError(
           'Failed to get Nearby Devices, Exception: ${e.toString()}'));
     }
-
-    //update to show new messages from nearby users
-    try {
-      messageInteractionsListener = (messageDto, sourceUUID) async {
-        //Assuming chat_list_block updated the database
-        debugPrint("[X]list is aliveeeeee");
-        add(UpdateNearbyUsers(
-            nearbyUsers: await _prepareNearbyUsersList(
-                NearbyDiscoveryService.getIdentities()),
-            error: ""));
-      };
-      MessageInteractionsService.addListener(messageInteractionsListener!);
-      await MessageInteractionsService.start();
-    } catch (e) {
-      emit(NearbyUsersError(
-          'Could not listen to nearby device messages. Exception: ${e.toString()}'));
-    }
   }
 
   Future<void> _onUpdateUsers(
@@ -107,9 +94,15 @@ class NearbyUsersBloc extends Bloc<NearbyUsersEvent, NearbyUsersState> {
     if (discoveryListener != null) {
       NearbyDiscoveryService.removeListener(discoveryListener!);
     }
-    if (messageInteractionsListener != null) {
-      MessageInteractionsService.removeListener(messageInteractionsListener!);
-    }
     return super.close();
+  }
+
+  void _startListeningToMessages() {
+    messageRepository.messageStream.listen((message) async {
+      add(UpdateNearbyUsers(
+          nearbyUsers: await _prepareNearbyUsersList(
+              NearbyDiscoveryService.getIdentities()),
+          error: ""));
+    });
   }
 }

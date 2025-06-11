@@ -13,6 +13,11 @@ class MessageInteractionsService {
   static bool _started = false;
   static final List<MessageInteractionsListener> _listeners = [];
 
+  static final StreamController<(MessageDTO, MeshProtocol)> _controller =
+      StreamController.broadcast();
+
+  static Stream<(MessageDTO, MeshProtocol)> get stream => _controller.stream;
+
   static start() async {
     if (_started) return;
     await _mesh.turnOn();
@@ -21,10 +26,12 @@ class MessageInteractionsService {
     _started = false;
   }
 
+  // TODO: LEGACY CODE REMOVE WHEN POSSIBLE
   static addListener(MessageInteractionsListener listener) {
     _listeners.add(listener);
   }
 
+  // TODO: LEGACY CODE REMOVE WHEN POSSIBLE
   static removeListener(MessageInteractionsListener listener) {
     _listeners.remove(listener);
   }
@@ -39,9 +46,13 @@ class MessageInteractionsService {
 
       debugPrint(
           '[X] received from ${messageDto.message} from:${protocol.sender}');
-      for (MessageInteractionsListener listener in _listeners) {
-        listener(messageDto, protocol.sender);
-      }
+
+      // ==== REPLACED WITH THE BOTTOM ONE LINER CODE ==== [LEGACY]
+      // for (MessageInteractionsListener listener in _listeners) {
+      //   listener(messageDto, protocol.sender);
+      // }
+
+      _controller.add((messageDto, protocol));
 
       //TODO: replace with ack
       final reply = MeshProtocol(

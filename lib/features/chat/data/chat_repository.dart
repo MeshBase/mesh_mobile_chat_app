@@ -81,10 +81,13 @@ class ChatRepository {
     // Check if there are messages between the two users (either direction)
     final messages = await db.query(
       'messages',
-      where: '(senderId = ? AND chatId LIKE ?) OR (senderId = ? AND chatId LIKE ?)',
+      where:
+          '(senderId = ? AND chatId LIKE ?) OR (senderId = ? AND chatId LIKE ?)',
       whereArgs: [
-        myId, '%$otherUserId%',
-        otherUserId, '%$myId%',
+        myId,
+        '%$otherUserId%',
+        otherUserId,
+        '%$myId%',
       ],
       limit: 1,
     );
@@ -113,6 +116,4 @@ class ChatRepository {
       debugPrint('[X] Message(s) already exist between $myId and $otherUserId');
     }
   }
-
-
 }
