@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mesh_mobile/common/mesh_helpers/message_interactions_service.dart';
 import 'package:mesh_mobile/common/repositories/message_repository.dart';
 import 'package:mesh_mobile/features/chat/data/chat_repository.dart';
 import 'package:mesh_mobile/features/chat/presentation/bloc/chat_detail_bloc.dart';
@@ -11,8 +12,10 @@ import 'package:mesh_mobile/features/settings/presentation/bloc/settings_bloc.da
 import 'package:mesh_mobile/router.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await MessageInteractionsService.start();
 
   runApp(Provider<MessageRepository>(
     create: (_) => MessageRepository(),

@@ -76,12 +76,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
       final chatState = state as ChatDetailLoaded;
       final List<ChatDetailModel> currentChat = List.of(chatState.chats);
 
-      await DatabaseHelper.storeMessage(
-        chatId: chatState.chatId,
-        senderId: chatState.chatId,
-        content: event.chatContent.content,
-        isSender: event.chatContent.isSender,
-      );
       currentChat.add(event.chatContent);
       emit(ChatDetailLoaded(chats: currentChat, chatId: chatState.chatId));
     }
